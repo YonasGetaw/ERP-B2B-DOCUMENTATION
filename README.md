@@ -635,67 +635,19 @@ This module fully complies with the **Foundation Architecture and Planning Frame
 
 ---
 
-### 3.4 Repository Structure
-
-Following the established monorepo modular monolith layout:
 hemin-erp/
-├── modules/
-│ └── b2b-portal/
-│ ├── CHARTER.md & AGENTS.md
-│ ├── domain/
-│ │ ├── order.entity.ts
-│ │ ├── quotation-request.entity.ts
-│ │ ├── support-ticket.entity.ts
-│ │ └── user.entity.ts
-│ ├── application/
-│ │ ├── catalog.service.ts
-│ │ ├── order.service.ts
-│ │ ├── quotation.service.ts
-│ │ ├── support.service.ts
-│ │ ├── customer.service.ts
-│ │ └── dashboard.service.ts
-│ ├── infrastructure/
-│ │ ├── order.repository.ts
-│ │ ├── quotation.repository.ts
-│ │ ├── support.repository.ts
-│ │ └── user.repository.ts
-│ ├── interfaces/
-│ │ ├── catalog.controller.ts
-│ │ ├── order.controller.ts
-│ │ ├── quotation.controller.ts
-│ │ ├── support.controller.ts
-│ │ ├── customer.controller.ts
-│ │ └── dashboard.controller.ts
-│ ├── events/
-│ │ ├── order-placed.event.ts
-│ │ ├── quotation-requested.event.ts
-│ │ └── ticket-created.event.ts
-│ └── authorization/
-│ └── b2b.permissions.ts
+├── modules/b2b-portal/
+│ ├── CHARTER.md & AGENTS.md # Module documentation
+│ ├── domain/ # Business logic & entities
+│ ├── application/ # Service layer (6 services)
+│ ├── infrastructure/ # Repositories & data access
+│ ├── interfaces/ # REST controllers (6 controllers)
+│ ├── events/ # Event definitions (3 event types)
+│ └── authorization/ # Permissions & RBAC
 ├── packages/
-│ ├── contracts/
-│ │ └── b2b-portal/
-│ │ ├── create-order.dto.ts
-│ │ ├── create-quotation-request.dto.ts
-│ │ ├── create-support-ticket.dto.ts
-│ │ ├── order-placed.event.schema.ts
-│ │ └── quotation-requested.event.schema.ts
-│ └── database/
-│ └── schema/
-│ └── b2b/ # Prisma schema files for b2b_portal.*
-│ ├── schema.prisma
-│ └── migrations/
-└── apps/
-└── web/
-└── app/
-└── (b2b-portal)/
-├── dashboard/
-├── catalog/
-├── orders/
-├── quotations/
-├── support/
-├── financial/
-└── profile
+│ ├── contracts/b2b-portal/ # Shared DTOs & event schemas
+│ └── database/schema/b2b/ # Prisma schema & migrations
+└── apps/web/app/(b2b-portal)/ # Next.js frontend (7 page sections)
 
 
 ---
@@ -836,79 +788,68 @@ CREATE TABLE b2b_portal.audit_log (
 CREATE INDEX idx_audit_log_entity ON b2b_portal.audit_log(entity_type, entity_id);
 CREATE INDEX idx_audit_log_correlation ON b2b_portal.audit_log(correlation_id);
 ```
-3.6.6 Authentication & Session Management
-Session Auth: Argon2-based session authentication for human customers
+### 3.6.6 Authentication & Session Management
 
-Service Accounts: Signed service-account tokens for integrations and future AI agents
+| **Feature** | **Implementation** |
+|-------------|-------------------|
+| **Human Authentication** | Argon2-based session authentication |
+| **Service Accounts** | Signed service-account tokens for integrations & AI agents |
+| **Session Timeout** | 30 minutes of inactivity; auto-expires |
+| **Multi-Factor Authentication** | Planned for Release 2 (enhancement) |
 
-Session Timeout: 30 minutes of inactivity; auto-expires for security
+**Security Principles:**
+- All API endpoints protected by authentication
+- Session tokens stored securely
+- Role-based access control (RBAC) enforced
+- Audit logging for all authentication events
 
-Multi-Factor Authentication: Planned for Release 2 (enhancement)
+### 3.7 Published Events
 
-3.7 Published Events (Detailed Schemas)
-3.7.1 b2b.order.placed
+The B2B Portal module emits three key events for downstream modules:
 
-interface OrderPlacedEvent {
-    order_id: string;
-    customer_id: string;
-    customer_name: string;
-    branch_id: string;
-    lines: Array<{
-        product_id: string;
-        product_name: string;
-        quantity: number;
-        unit_price: number;
-        total_price: number;
-        branch_destination?: string;
-    }>;
-    total_amount: number;
-    currency: string;  // 'USD' or 'ETB'
-    order_date: string;  // ISO 8601
-    payment_method: string;
-    special_instructions?: string;
-}
+| **Event** | **Trigger** | **Consumers** | **Key Data** |
+|-----------|-------------|---------------|--------------|
+| `b2b.order.placed` | Order successfully placed | Sales, Inventory | Order ID, Customer, Items, Total, Branch |
+| `b2b.quotation.requested` | Quotation request submitted | Sales | Request ID, Customer, Items, Required Date |
+| `b2b.ticket.created` | Support ticket raised | Customer Service | Ticket ID, Customer, Issue Type, Priority |
 
-3.7.2 b2b.quotation.requested
-interface QuotationRequestedEvent {
-    quote_req_id: string;
-    customer_id: string;
-    customer_name: string;
-    items: Array<{
-        product_id: string;
-        product_name: string;
-        quantity: number;
-        unit_of_measure: string;
-    }>;
-    required_by_date: string;  // ISO 8601
-    delivery_location: string;
-    special_requirements?: string;
-    created_at: string;  // ISO 8601
-}
+**Event Flow:**
+1. Customer action triggers event
+2. Event published via NestJS EventEmitter2 (Release 1)
+3. Plan to migrate to BullMQ/Redis (Release 2)
+4. Downstream modules consume events for processing
 
-3.7.3 b2b.ticket.created
-interface TicketCreatedEvent {
-    ticket_id: string;
-    customer_id: string;
-    customer_name: string;
-    issue_type: string;  // 'order_issue', 'product_issue', 'billing', 'technical', 'other'
-    priority: string;    // 'low', 'medium', 'high', 'critical'
-    subject: string;
-    description: string;
-    order_reference?: string;
-    attachments?: string[];
-    created_at: string;  // ISO 8601
-}
+**Key Properties:**
+- ✅ Idempotent processing (Idempotency-Key header)
+- ✅ Audit logging on every event
+- ✅ Correlation ID for traceability
+- ✅ Retry mechanism with exponential backoff
 
-3.8 Background Jobs (BullMQ)
+### 3.8 Background Jobs (BullMQ)
 
-Queue Name	Job	Trigger	Description
-b2b.order-notifications	SendOrderConfirmation	On order placement	Email notification with order summary; 3 retries with backoff
-b2b.order-notifications	SendOrderTrackingUpdate	On order status change	Email notification with updated tracking info
-b2b.quotation-pdf	GenerateQuotationPdf	On quotation submission	Async PDF generation via BullMQ; 3 retries with backoff
-b2b.ticket-notifications	SendTicketConfirmation	On ticket creation	Email notification with ticket reference
-b2b.ticket-notifications	SendTicketEscalation	On ticket priority escalation	Alert to support team
-b2b.cleanup	CleanupExpiredCarts	Hourly cron	Remove carts older than 30 minutes
-b2b.dashboard-update	RefreshDashboardCache	Every 5 minutes	Update cached dashboard data
+Background jobs handle asynchronous processing via BullMQ, improving user experience and system performance.
+
+| **Queue** | **Job** | **Trigger** | **Purpose** |
+|-----------|---------|-------------|-------------|
+| `b2b.order-notifications` | Order Confirmation | On order placement | Email notification with order summary |
+| `b2b.order-notifications` | Order Tracking Update | On status change | Email notification with tracking info |
+| `b2b.quotation-pdf` | Generate PDF | On quotation submission | Async quotation PDF generation |
+| `b2b.ticket-notifications` | Ticket Confirmation | On ticket creation | Email with ticket reference |
+| `b2b.ticket-notifications` | Ticket Escalation | On priority escalation | Alert support team |
+| `b2b.cleanup` | Cleanup Expired Carts | Hourly cron | Remove carts older than 30 minutes |
+| `b2b.dashboard-update` | Refresh Dashboard Cache | Every 5 minutes | Update cached dashboard data |
+
+**Job Configuration:**
+- ⏱️ **Retries:** 3 attempts with exponential backoff
+- 💀 **Dead-Letter Queue:** Failed jobs go to `{queue}:failed` for manual review
+- 📊 **Monitoring:** Queue depth and job success rates monitored
+- 🔄 **Idempotent:** Duplicate jobs prevented with Idempotency-Key
+
+**Benefits:**
+- Faster HTTP response times
+- Reliable email delivery
+- Scalable background processing
+- Reduced system load during peak hours
 
 
 ## 4. Project Management & Execution

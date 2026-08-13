@@ -393,7 +393,7 @@ CREATE TABLE b2b_portal.audit_log (
 
 ![B2B Commerce Portal Gantt Chart Schedule](gantt_chart.png)
 
-```mermaid
+```
 gantt
     title B2B Commerce Portal - Four-Week Implementation Schedule (Aug 13 – Sep 10, 2026)
     dateFormat  YYYY-MM-DD

@@ -286,7 +286,7 @@ hemin-erp/
 ├── packages/contracts/b2b-portal/ # Shared DTOs
 ├── packages/database/schema/b2b/  # Prisma schema files
 └── apps/web/app/(b2b-portal)/     # Next.js App Router frontend pages
-
+```
 # B2B Commerce Portal Module - Implementation Plan
 
 [![NestJS](https://img.shields.io/badge/NestJS-8.0+-red.svg)](https://nestjs.com/)

@@ -286,3 +286,267 @@ hemin-erp/
 ├── packages/contracts/b2b-portal/ # Shared DTOs
 ├── packages/database/schema/b2b/  # Prisma schema files
 └── apps/web/app/(b2b-portal)/     # Next.js App Router frontend pages
+
+# B2B Commerce Portal Module - Implementation Plan
+
+[![NestJS](https://img.shields.io/badge/NestJS-8.0+-red.svg)](https://nestjs.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.0+-black.svg)](https://nextjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.0+-blueviolet.svg)](https://www.prisma.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+
+## 📋 Table of Contents
+
+- [Project Overview](#project-overview)
+- [Module Overview](#module-overview)
+- [Business Objectives](#business-objectives)
+- [Module Scope](#module-scope)
+- [Security & RBAC](#security--rbac)
+- [Project Execution](#project-execution)
+  - [Work Breakdown Structure](#work-breakdown-structure)
+  - [Resource Allocation](#resource-allocation)
+  - [Development Timeline](#development-timeline)
+  - [Milestones](#milestones)
+  - [Deliverables](#deliverables)
+- [Quality & Risk Management](#quality--risk-management)
+  - [Risk Mitigation](#risk-mitigation)
+  - [Quality Assurance](#quality-assurance)
+  - [Testing Strategy](#testing-strategy)
+  - [Deployment Readiness](#deployment-readiness)
+- [Architecture & Integration](#architecture--integration)
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
+
+---
+
+## 🚀 Project Overview
+
+| **Attribute** | **Details** |
+|---------------|-------------|
+| **Programme** | Hemin Business PLC — Enterprise ERP |
+| **Module** | B2B Commerce Portal |
+| **Team** | B2B Commerce Engineering Team |
+| **Release** | Release 1 (MVP) |
+| **Timeline** | 4-Week Sprint |
+| **Tech Stack** | NestJS + TypeScript, Next.js App Router, PostgreSQL 16, Prisma ORM, BullMQ |
+| **Architecture** | Modular Monolith with strict schema-per-module ownership |
+
+---
+
+## 📦 Module Overview
+
+| **Attribute** | **Details** |
+|---------------|-------------|
+| **Module Name** | `b2b_commerce_portal` |
+| **Purpose** | Centralized digital hub for B2B customers to manage accounts, discover products, request quotations, place orders, track deliveries, view financials, and submit support tickets. |
+| **Primary Users** | B2B Customers, Customer Branch Managers, Procurement Officers |
+| **Secondary Users** | Internal Sales Team, Customer Support Representatives, Finance (Read-only) |
+| **Owned Schema** | `b2b_portal.*` |
+| **Upstream Dependencies** | Identity (users/roles), Organization (branches), Inventory (product catalog & availability), Finance (credit limits & invoices), Sales (contract pricing) |
+| **Published Events** | `b2b.order.placed`, `b2b.quotation.requested`, `b2b.ticket.created` |
+
+---
+
+## 🎯 Business Objectives
+
+The B2B Commerce Portal module enables the business to achieve:
+
+| **ID** | **Objective** | **Supporting FRs** |
+|--------|---------------|-------------------|
+| **BO-01** | Digitize the B2B purchasing experience to reduce manual order entry and sales team administrative load | FR-CP-003, FR-CP-013, FR-CP-016 |
+| **BO-02** | Provide real-time transparency into product availability, standard catalogs, and customer-specific contract pricing | FR-CP-002, FR-CP-011, FR-CP-012, FR-CP-015 |
+| **BO-03** | Empower customers with self-service account management, including financial visibility and multi-branch controls | FR-CP-001, FR-CP-006, FR-CP-009, FR-CP-010, FR-CP-014 |
+| **BO-04** | Streamline communication for quotations, digital payments, and post-sales support/ticketing | FR-CP-004, FR-CP-005, FR-CP-007, FR-CP-008 |
+
+---
+
+## 📐 Module Scope
+
+### ✅ In-Scope (Release 1)
+
+- **Account & Identity:** Secure login, branch management, user role provisioning
+- **Discovery & Pricing:** Digital catalog, availability checks, customer-specific catalogs, contract pricing
+- **Transactions:** Online ordering, multi-branch ordering, repeat orders, quotation requests
+- **Finance & Tracking:** Order tracking, invoice/statement access, credit visibility, digital payment initiation
+- **Support:** Customer support ticketing, comprehensive account dashboard
+
+### ❌ Excluded (Release 1)
+
+- **Warehouse Fulfillment:** Picking, packing, dispatching (Owned by Inventory module)
+- **GL Journal Entries:** Direct accounting ledger entries (Owned by Finance module)
+- **Mobile App:** Native iOS/Android app (Deferred to Release 2)
+
+---
+
+## 🔐 Security & RBAC
+
+### Tenant & Data Isolation
+
+- **Customer Isolation:** Logged-in portal users can only view data associated with their specific `customer_id`
+- **Branch Restrictions:** Users with the `branch_manager` role are restricted strictly to their assigned branch ID for ordering and tracking
+
+### Audit Requirements
+
+Every state transition writes an append-only row to the shared audit log capturing:
+
+- `actor_id` - User who performed the action
+- `correlation_id` - Unique identifier for the transaction
+- `previous_state` - State before the transition
+- `new_state` - State after the transition
+- `timestamp` - When the transition occurred
+
+---
+
+## 📊 Project Execution
+
+### Work Breakdown Structure
+
+#### Week 1 — Planning, Architecture & Design
+- Business Process Validation for all 16 FRs
+- State Machine Design
+- API Contract Drafts (DTOs)
+- UI Wireframes
+
+#### Week 2 — Backend Development (NestJS)
+- PostgreSQL Schema & Prisma Migrations
+- CatalogService, PricingService, OrderService, QuotationService
+- Permission Guards, RBAC Implementation
+- Audit Logging Middleware
+
+#### Week 3 — Frontend Development (Next.js)
+- Next.js App Router Authentication Flow
+- Customer Account Dashboard & Branch Management UI
+- Shopping Cart, Checkout, Multi-Branch Routing UI
+
+#### Week 4 — Testing, Integration & Deployment
+- Unit & Integration Tests (Testcontainers + Jest)
+- Cross-Module Integration Validation (`b2b.order.placed`)
+- Stakeholder UAT & MVP Sign-Off (M4)
+
+---
+
+### Resource Allocation
+
+| **Role** | **Allocation** | **Responsibilities** |
+|----------|---------------|---------------------|
+| Senior Developer (Module Owner) | 100% | Architecture review, PR reviews |
+| Backend Developer | 100% | Prisma migrations, NestJS Services, BullMQ jobs, Event publishers |
+| Frontend Developer | 100% | Next.js portal development, responsive UI, API integration |
+| QA Engineer | 100% | E2E testing, API endpoint integration tests, UAT |
+| DevOps (Shared) | 50% | CI/CD pipeline, staging deployment |
+
+---
+
+### Development Timeline
+Week 1: Capability mapping → API contracts → UI wireframes → Architecture review
+Week 2: Prisma schema → NestJS services → RBAC → BullMQ jobs → REST controllers
+Week 3: Next.js pages → Account Dashboard → API integration → Responsive UI
+Week 4: Unit/Integration/Auth/E2E tests → Bug fixes → UAT → Deployment
+
+
+---
+
+### Milestones
+
+| **Milestone** | **Description** | **Completion Criteria** |
+|---------------|-----------------|------------------------|
+| **M1** | Planning Complete | Wireframes completed, architecture gate passed |
+| **M2** | Backend Complete | NestJS services implemented, Prisma migrations applied |
+| **M3** | Frontend Complete | Next.js pages functional, Dashboard live |
+| **M4** | MVP Sign-Off | Test suite passing, CI/CD pipeline green, UAT approved |
+
+---
+
+### Deliverables
+
+| **ID** | **Deliverable** | **Description** |
+|--------|----------------|-----------------|
+| **D-01** | Module Charter & AGENTS.md | Project documentation and AI agent guidelines |
+| **D-02** | Prisma Database Schema | `b2b_portal.*` schema & migrations |
+| **D-03** | UI Wireframes | Customer portal wireframes and mockups |
+| **D-04** | Web Application | Fully functional B2B Next.js web application |
+| **D-05** | Test Suites | Unit, Integration, E2E tests & UAT sign-off record |
+
+---
+
+## ⚠️ Quality & Risk Management
+
+### Risk Mitigation
+
+| **Risk ID** | **Description** | **Mitigation** |
+|-------------|-----------------|----------------|
+| **R-B2B-01** | Real-time catalog/stock availability checks slow down portal UI | Utilize efficient caching mechanisms and materialized views for `inventory.v_available_products` |
+| **R-B2B-02** | Customer places order exceeding credit limit due to stale data | Enforce strict, synchronous credit check immediately before placing order |
+| **R-B2B-03** | `b2b.order.placed` event fails to reach Sales or Inventory modules | Implement BullMQ dead-letter queues and automated retry mechanisms with exponential backoff |
+
+---
+
+### Quality Assurance
+
+All code merges must pass automated CI gates:
+
+- **Static Analysis:** ESLint (file-size limits), TypeScript type checking
+- **Dependency Boundaries:** `dependency-cruiser` blocks cross-module schema imports
+- **Database Grants:** `check:db-grants` ensures actual roles match `grants.json`
+- **Security:** `npm audit` and Trivy image scans
+
+---
+
+### Testing Strategy
+
+| **Testing Type** | **Scope** |
+|------------------|-----------|
+| **Unit** | State guards (rejecting order placement if cart is empty); business rule validation |
+| **Integration** | DB transactions (placing an order writes to DB and emits event atomically using Testcontainers) |
+| **Authorization** | Enforcing tenant and branch isolation |
+| **Idempotency** | Preventing duplicate order creation using Idempotency-Key headers |
+| **E2E** | Full browser flow (Login → Browse Catalog → Add to Cart → Checkout → View Order Tracking) |
+
+---
+
+### Deployment Readiness
+
+- [ ] All Prisma migrations include a reversible down-migration
+- [ ] Dry-run migration against a staging snapshot succeeds without data loss
+- [ ] Cross-module event routing verified in staging
+- [ ] UAT sign-off received from internal Sales stakeholders and pilot B2B customers
+
+---
+
+## 🏗️ Architecture & Integration
+
+### Integration Requirements
+
+The B2B module reads external data exclusively through published database views or controlled application-service calls. All outbound integrations use NestJS EventEmitter2 for Release 1, migrating to a message broker (BullMQ/Redis) for Release 2.
+
+**Outbound Events:**
+
+| **Event** | **Target** | **Payload** |
+|-----------|-----------|-------------|
+| `b2b.order.placed` | Sales & Inventory | `{ order_id, customer_id, branch_id, lines, total }` |
+| `b2b.quotation.requested` | Sales | `{ quote_req_id, customer_id, items, required_by_date }` |
+| `b2b.ticket.created` | Customer Service | `{ ticket_id, customer_id, issue_type, description }` |
+
+**Inbound Data:**
+
+| **Source** | **View** | **Purpose** |
+|------------|----------|-------------|
+| Inventory | `inventory.v_available_products` | Product Catalog & Availability Check |
+| Sales | `sales.v_contract_pricing` | Contract Pricing Management |
+| Finance | `finance.v_customer_financials` | Invoice Access & Credit Visibility |
+| Identity | `identity.v_active_users` | Secure Portal Login |
+
+### Repository Structure
+
+```plaintext
+hemin-erp/
+├── modules/b2b-portal/
+│   ├── CHARTER.md & AGENTS.md
+│   ├── domain/               # Pure business logic (Models)
+│   ├── application/          # OrderService, CatalogService, SupportService
+│   ├── infrastructure/       # Prisma repositories
+│   ├── interfaces/           # REST Controllers
+│   └── events/ & authorization/
+├── packages/contracts/b2b-portal/ # Shared DTOs
+├── packages/database/schema/b2b/  # Prisma schema files
+└── apps/web/app/(b2b-portal)/     # Next.js App Router frontend pages

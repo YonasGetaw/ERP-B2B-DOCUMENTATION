@@ -391,7 +391,7 @@ CREATE TABLE b2b_portal.audit_log (
 
 ## 23. Gantt Chart & Milestones
 
-![B2B Commerce Portal Gantt Chart Schedule](/C:/Users/hp/.gemini/antigravity/brain/3a0178ba-a910-4b58-8689-be5e04fa2eaf/gantt_chart.png)
+![B2B Commerce Portal Gantt Chart Schedule](gantt_chart.png)
 
 ```mermaid
 gantt
